@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkinIQ — AI Skin Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cream:#FDFCF9;
+  --paper:#F7F5F0;
+  --white:#FFFFFF;
+  --ink:#19180F;
+  --ink2:#3C3B32;
+  --muted:#9C9A8E;
+  --faint:#E8E5DC;
+  --rose:#C96B5A;
+  --rose-soft:#F2E8E5;
+  --rose-mid:#E8C4BB;
+  --blush:#FBF0EC;
+  --sage:#6B9E7A;
+  --sage-soft:#EBF4EE;
+  --gold:#B8955A;
+  --gold-soft:#F5EEE0;
+  --r:18px;--r2:26px;--r3:999px;
+  --shadow:0 1px 3px rgba(25,24,15,.06),0 4px 16px rgba(25,24,15,.06);
+  --shadow-up:0 8px 40px rgba(25,24,15,.12);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  height:58px;
+  background:rgba(253,252,249,.88);
+  backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--faint);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+}
+.logo{font-family:'Instrument Serif',serif;font-size:1.45rem;letter-spacing:-.01em;color:var(--ink)}
+.logo-dot{color:var(--rose)}
+.topbar-badge{
+  font-size:.68rem;font-weight:500;letter-spacing:.04em;
+  background:var(--rose-soft);color:var(--rose);
+  padding:.28rem .85rem;border-radius:var(--r3);
+  border:1px solid var(--rose-mid);
+}
+
+/* ─── PROGRESS ─── */
+.progress-bar{
+  display:none;
+  background:var(--white);
+  border-bottom:1px solid var(--faint);
+  padding:.9rem 2rem;
+}
+.steps{
+  display:flex;align-items:center;
+  max-width:560px;margin:0 auto;
+}
+.stp{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:.28rem;
+  position:relative;
+}
+.stp::after{
+  content:'';position:absolute;
+  top:11px;left:calc(50% + 11px);right:calc(-50% + 11px);
+  height:1px;background:var(--faint);
+  transition:background .4s;
+}
+.stp:last-child::after{display:none}
+.stp.done::after,.stp.active::after{background:var(--rose)}
+.stp-dot{
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid var(--faint);background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.55rem;font-weight:600;color:var(--muted);
+  position:relative;z-index:1;transition:all .3s;
+}
+.stp.active .stp-dot{border-color:var(--rose);color:var(--rose);background:var(--rose-soft);box-shadow:0 0 0 4px rgba(201,107,90,.1)}
+.stp.done .stp-dot{background:var(--rose);border-color:var(--rose);color:#fff;font-size:.75rem}
+.stp-lbl{font-size:.58rem;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.stp.active .stp-lbl{color:var(--rose)}
+.stp.done .stp-lbl{color:var(--rose)}
+
+/* ─── PANEL SYSTEM ─── */
+.panel{display:none;animation:rise .45s cubic-bezier(.22,1,.36,1) both}
+.panel.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── HERO ─── */
+.hero{
+  min-height:calc(100vh - 58px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:4rem 1.5rem;
+}
+.hero-chip{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:var(--rose-soft);color:var(--rose);
+  font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:.38rem 1rem;border-radius:var(--r3);
+  border:1px solid var(--rose-mid);
+  margin-bottom:2rem;
+}
+.hero h1{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(3.2rem,8vw,6rem);
+  line-height:.96;letter-spacing:-.03em;
+  color:var(--ink);
+  margin-bottom:1.4rem;max-width:700px;
+}
+.hero h1 i{color:var(--rose);font-style:italic}
+.hero-sub{
+  font-size:1.05rem;font-weight:300;color:var(--muted);
+  line-height:1.75;max-width:440px;margin:0 auto 2.8rem;
+}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:.55rem;
+  background:var(--ink);color:#fff;
+  font-family:'Geist',sans-serif;font-size:.9rem;font-weight:600;
+  padding:.9rem 2.2rem;border-radius:var(--r3);
+  border:none;cursor:pointer;
+  transition:background .2s,transform .2s,box-shadow .2s;
+  letter-spacing:-.01em;
+}
+.cta-btn:hover{background:var(--rose);transform:translateY(-2px);box-shadow:0 8px 28px rgba(201,107,90,.3)}
+.hero-proof{
+  display:flex;gap:3rem;margin-top:4rem;
+  padding-top:3rem;border-top:1px solid var(--faint);
+}
+.proof-item{text-align:center}
+.proof-num{font-family:'Instrument Serif',serif;font-size:2rem;color:var(--ink);display:block}
+.proof-txt{font-size:.72rem;color:var(--muted);font-weight:400;margin-top:.2rem}
+
+/* ─── SECTION HEADER ─── */
+.sec-header{padding:2.2rem 1.5rem 0;text-align:center;max-width:600px;margin:0 auto}
+.sec-tag{display:block;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--rose);margin-bottom:.5rem}
+.sec-title{font-family:'Instrument Serif',serif;font-size:2rem;letter-spacing:-.02em;color:var(--ink);margin-bottom:.45rem}
+.sec-sub{font-size:.88rem;color:var(--muted);line-height:1.7;font-weight:300}
+
+/* ─── INSTRUCTION STRIP ─── */
+.instr-strip{
+  display:flex;align-items:center;gap:.7rem;
+  background:var(--blush);border:1px solid var(--rose-mid);
+  border-radius:var(--r);padding:.8rem 1.1rem;
+  font-size:.8rem;font-weight:500;color:var(--rose);
+  max-width:680px;margin:1.2rem auto 0;
+}
+
+/* ─── QUALITY ROW ─── */
+.q-row{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap;margin:.9rem 0}
+.q-chip{
+  display:flex;align-items:center;gap:.35rem;
+  font-size:.68rem;font-weight:500;color:var(--muted);
+  background:var(--white);border:1px solid var(--faint);
+  padding:.28rem .75rem;border-radius:var(--r3);
+  transition:all .3s;
+}
+.q-chip.ok{background:var(--sage-soft);border-color:#B8DBBF;color:var(--sage)}
+.q-chip.warn{background:var(--gold-soft);border-color:#DFC89A;color:var(--gold)}
+.qdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ─── CAMERA SECTION ─── */
+.cam-section{max-width:360px;margin:0 auto 1.2rem;display:none}
+#cameraFeed{
+  width:100%;aspect-ratio:3/4;object-fit:cover;
+  border-radius:var(--r2);background:#000;display:none;
+  box-shadow:var(--shadow-up);
+}
+#captureCanvas{display:none}
+.cam-ctrl{
+  display:flex;align-items:center;justify-content:center;
+  gap:.9rem;margin-top:.9rem;
+}
+
+/* ─── ANGLES GRID ─── */
+.ang-wrap{padding:1.2rem 1.5rem;max-width:680px;margin:0 auto}
+.ang-grid{
+  display:grid;
+  grid-template-columns:1fr 1.3fr 1fr;
+  grid-template-rows:auto auto auto;
+  gap:.65rem;
+}
+.acard{
+  background:var(--white);
+  border:1.5px solid var(--faint);
+  border-radius:var(--r);
+  overflow:hidden;cursor:pointer;
+  transition:border-color .22s,box-shadow .22s,transform .22s;
+  display:flex;flex-direction:column;aspect-ratio:3/4;
+}
+.acard:hover{border-color:var(--rose-mid);box-shadow:var(--shadow);transform:translateY(-2px)}
+.acard.active{border-color:var(--rose);box-shadow:0 0 0 3px rgba(201,107,90,.12),var(--shadow)}
+.acard.captured{border-color:var(--sage);box-shadow:0 0 0 3px rgba(107,158,122,.1)}
+.acard.center{grid-column:2;grid-row:1}
+.acard.forehead{grid-column:2;grid-row:2}
+.acard.left{grid-column:1;grid-row:1/3}
+.acard.right{grid-column:3;grid-row:1/3}
+.acard.chin{grid-column:2;grid-row:3}
+.ac-head{
+  padding:.45rem .65rem;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--paper);
+  border-bottom:1px solid var(--faint);
+}
+.ac-label{font-size:.57rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.acard.active .ac-label{color:var(--rose)}
+.acard.captured .ac-label{color:var(--sage)}
+.ac-status{font-size:.75rem}
+.ac-body{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--rose-soft);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.4rem;
+}
+.ac-body img{width:100%;height:100%;object-fit:cover;display:block}
+.face-ring{
+  width:52%;padding-top:68%;
+  border:2px dashed rgba(201,107,90,.3);
+  border-radius:50% 50% 46% 46%;
+  position:relative;top:-6%;
+  transition:border-color .3s;
+}
+.acard.active .face-ring{border-color:var(--rose);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{border-color:rgba(201,107,90,.35)}50%{border-color:var(--rose)}}
+.ac-hint{
+  font-size:.52rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);position:absolute;bottom:.55rem;width:100%;text-align:center;
+}
+
+/* ─── THUMBS ─── */
+.thumbs{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:.45rem;
+  max-width:680px;margin:0 auto;padding:0 1.5rem;
+}
+.thumb{
+  aspect-ratio:3/4;border-radius:12px;overflow:hidden;
+  background:var(--rose-soft);border:1.5px solid var(--faint);
+  position:relative;
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-l{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(25,24,15,.7));
+  padding:.35rem .3rem .25rem;
+  font-size:.46rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:#fff;text-align:center;
+}
+.thumb.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem}
+.thumb.empty .ei{font-size:1rem;opacity:.35}
+.thumb.empty .el{font-size:.46rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+
+/* ─── BUTTONS ─── */
+.btn{
+  font-family:'Geist',sans-serif;font-size:.78rem;font-weight:600;
+  letter-spacing:-.005em;
+  border:1.5px solid var(--faint);background:var(--white);color:var(--ink);
+  padding:.6rem 1.3rem;border-radius:var(--r3);cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--rose-mid);color:var(--rose)}
+.btn-dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn-dark:hover{background:var(--rose);border-color:var(--rose);color:#fff;box-shadow:0 6px 20px rgba(201,107,90,.25)}
+.btn-dark:disabled{background:var(--faint);border-color:var(--faint);color:var(--muted);cursor:not-allowed;box-shadow:none}
+.shutter{
+  width:58px;height:58px;border-radius:50%;
+  border:2.5px solid var(--rose);background:var(--white);
+  cursor:pointer;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  transition:box-shadow .2s;flex-shrink:0;
+}
+.shutter::after{
+  content:'';width:40px;height:40px;border-radius:50%;
+  background:var(--rose);transition:all .15s;
+}
+.shutter:hover{box-shadow:0 0 0 7px rgba(201,107,90,.12)}
+.shutter:active::after{transform:scale(.88)}
+
+/* ─── ACTION ROW ─── */
+.act-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:.7rem;padding:1.2rem 1.5rem;flex-wrap:wrap;
+}
+.count-badge{
+  font-size:.7rem;font-weight:500;
+  background:var(--paper);color:var(--muted);
+  border:1px solid var(--faint);
+  padding:.28rem .85rem;border-radius:var(--r3);
+}
+
+/* ─── SCAN SCREEN ─── */
+.scan-screen{padding:5rem 1.5rem;text-align:center;max-width:460px;margin:0 auto}
+.scan-orb{
+  width:96px;height:96px;border-radius:50%;
+  margin:0 auto 2rem;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.scan-orb::before{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:conic-gradient(var(--rose),var(--rose-mid),var(--sage),var(--gold),var(--rose));
+  animation:spin 2s linear infinite;
+}
+.scan-orb::after{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--white)}
+.orb-icon{position:relative;z-index:1;font-size:1.9rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-title{font-family:'Instrument Serif',serif;font-size:1.9rem;letter-spacing:-.02em;margin-bottom:.35rem}
+.scan-sub{font-size:.83rem;color:var(--muted);font-weight:300}
+.scan-list{list-style:none;max-width:300px;margin:1.8rem auto 0;display:flex;flex-direction:column;gap:.3rem;text-align:left}
+.scan-li{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.42rem .7rem;border-radius:10px;
+  font-size:.77rem;font-weight:500;color:var(--muted);
+  transition:all .3s;
+}
+.scan-li.active{background:var(--rose-soft);color:var(--rose)}
+.scan-li.done{color:var(--sage)}
+.sl-ic{font-size:.85rem;width:1rem;text-align:center}
+
+/* ─── RESULTS / ROUTINE PAGE ─── */
+.rpage{padding:1.8rem 1.5rem}
+.rpage-inner{max-width:1060px;margin:0 auto}
+.rpage-top{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem;
+}
+.rpage-top h2{font-family:'Instrument Serif',serif;font-size:2rem;letter-spacing:-.02em}
+.rpage-top p{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.btn-row{display:flex;gap:.55rem;flex-wrap:wrap}
+.two-col{display:grid;grid-template-columns:280px 1fr;gap:1.1rem;align-items:start}
+@media(max-width:740px){
+  .two-col{grid-template-columns:1fr}
+  .ang-grid{grid-template-columns:repeat(2,1fr)}
+  .acard.center{grid-column:1;grid-row:1}
+  .acard.forehead{grid-column:2;grid-row:1}
+  .acard.left{grid-column:1;grid-row:2}
+  .acard.right{grid-column:2;grid-row:2}
+  .acard.chin{grid-column:1/3;grid-row:3;aspect-ratio:16/9}
+  .hero-proof{gap:1.5rem}
+}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--white);border:1px solid var(--faint);
+  border-radius:var(--r2);padding:1.3rem;margin-bottom:1rem;
+  box-shadow:var(--shadow);
+}
+.card-t{
+  font-size:.65rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* ─── SCORE CARD ─── */
+.score-card{
+  background:linear-gradient(145deg,#FFF7F5,#FEFCFA);
+  border:1px solid var(--rose-mid);border-radius:var(--r2);
+  padding:1.6rem 1.3rem;text-align:center;margin-bottom:1rem;
+  box-shadow:var(--shadow);
+}
+.ring-wrap{width:116px;height:116px;position:relative;margin:0 auto .9rem}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-wrap circle{fill:none;stroke-width:5;stroke-linecap:round}
+.ring-bg{stroke:var(--rose-soft)}
+.ring-fill{stroke:var(--rose);transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-n{font-family:'Instrument Serif',serif;font-size:2.2rem;color:var(--ink);line-height:1}
+.ring-l{font-size:.55rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.1rem}
+.type-pill{
+  display:inline-block;background:var(--rose-soft);color:var(--rose);
+  font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:.28rem .9rem;border-radius:var(--r3);margin-bottom:.5rem;
+}
+.type-desc{font-size:.76rem;color:var(--muted);line-height:1.72;font-weight:300}
+
+/* ─── CONDITION ROW ─── */
+.cond-row{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.5rem 0;border-bottom:1px solid var(--faint);
+}
+.cond-row:last-child{border:none}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cname{font-size:.78rem;font-weight:500;flex:1;color:var(--ink2)}
+.csev{
+  font-size:.63rem;font-weight:600;
+  padding:.18rem .55rem;border-radius:var(--r3);
+}
+.csev.Mild{background:#FFF8E1;color:#7A5A00}
+.csev.Moderate{background:#FFE8E5;color:#8B2A22}
+.csev.Severe{background:#FDDCDC;color:#7D1A1A}
+
+/* ─── METRICS ─── */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.mbox{background:var(--paper);border-radius:13px;padding:.85rem;text-align:center}
+.mval{font-family:'Instrument Serif',serif;font-size:1.6rem;color:var(--ink);line-height:1}
+.mlbl{font-size:.58rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:.22rem}
+.mbar{height:3px;background:var(--faint);border-radius:2px;margin-top:.4rem;overflow:hidden}
+.mbar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--rose-mid),var(--rose));transition:width 1.2s ease}
+
+/* ─── ZONES ─── */
+.zones-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.zbox{background:var(--paper);border-radius:12px;padding:.75rem}
+.zbox.full{grid-column:1/3}
+.zname{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rose);margin-bottom:.28rem}
+.ztext{font-size:.74rem;color:var(--ink2);line-height:1.6;font-weight:300}
+
+/* ─── INSIGHTS ─── */
+.insights{
+  background:var(--blush);border:1px solid var(--rose-mid);
+  border-radius:var(--r);padding:1.1rem;
+  font-size:.82rem;font-style:italic;color:var(--ink2);line-height:1.82;font-weight:300;
+}
+
+/* ─── PROGRESS BOX ─── */
+.prog-box{
+  background:linear-gradient(135deg,var(--sage-soft),var(--blush));
+  border:1px solid #C3DDCA;border-radius:var(--r2);padding:1.3rem;margin-bottom:1rem;
+}
+.prog-lbl{font-size:.65rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--sage)}
+.prog-desc{font-size:.75rem;color:var(--ink2);margin-top:.35rem;line-height:1.68;font-weight:300}
+.prog-mini{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.8rem}
+.pm-box{background:rgba(255,255,255,.7);border-radius:11px;padding:.75rem;text-align:center}
+.pm-val{font-family:'Instrument Serif',serif;font-size:1.5rem;color:var(--ink)}
+.pm-lbl{font-size:.57rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:.18rem}
+
+/* ─── ROUTINE ─── */
+.rlist{display:flex;flex-direction:column;gap:.45rem}
+.ritem{
+  display:flex;gap:.75rem;align-items:flex-start;
+  padding:.75rem;background:var(--paper);border-radius:12px;
+  transition:background .2s;
+}
+.ritem:hover{background:var(--rose-soft)}
+.rnum{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--rose);color:#fff;
+  font-size:.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.rstep{font-size:.73rem;font-weight:600;color:var(--ink)}
+.rprod{font-size:.7rem;color:var(--rose);font-weight:500;margin-top:.08rem}
+.rnote{font-size:.66rem;color:var(--muted);line-height:1.6;margin-top:.18rem;font-weight:300}
+
+/* ─── TREATMENTS ─── */
+.tgrid{display:flex;flex-direction:column;gap:.65rem}
+.titem{
+  display:flex;gap:.75rem;align-items:flex-start;
+  padding:.95rem;background:var(--paper);border-radius:14px;
+  border:1px solid transparent;transition:all .2s;
+}
+.titem:hover{border-color:var(--rose-mid);background:var(--white)}
+.tico{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--rose-soft);display:flex;align-items:center;justify-content:center;
+  font-size:1.05rem;flex-shrink:0;
+}
+.tname{font-size:.77rem;font-weight:600;color:var(--ink)}
+.tdesc{font-size:.69rem;color:var(--muted);line-height:1.6;margin-top:.18rem;font-weight:300}
+.ttags{display:flex;flex-wrap:wrap;gap:.28rem;margin-top:.45rem}
+.ttag{
+  font-size:.58rem;font-weight:600;padding:.18rem .55rem;
+  border-radius:var(--r3);background:var(--paper);
+  color:var(--muted);border:1px solid var(--faint);
+}
+
+/* ─── INGREDIENTS ─── */
+.ing-wrap{display:flex;flex-wrap:wrap;gap:.35rem}
+.ing{font-size:.7rem;font-weight:500;padding:.32rem .78rem;border-radius:var(--r3)}
+.ing.good{background:var(--sage-soft);color:var(--sage)}
+.ing.bad{background:#FEE8E8;color:#C03030}
+
+/* ─── QUIZ ─── */
+.quiz-wrap{padding:1.8rem 1.5rem;max-width:700px;margin:0 auto}
+.qcard{
+  background:var(--white);border:1px solid var(--faint);
+  border-radius:var(--r2);padding:1.3rem;margin-bottom:.9rem;
+  box-shadow:var(--shadow);transition:border-color .2s;
+}
+.qcard.ok{border-color:var(--rose-mid)}
+.qq{font-family:'Instrument Serif',serif;font-size:1.05rem;color:var(--ink);margin-bottom:.9rem}
+.qopts{display:flex;flex-wrap:wrap;gap:.45rem}
+.qopt{
+  font-size:.76rem;font-weight:500;
+  padding:.46rem 1rem;border-radius:var(--r3);
+  border:1.5px solid var(--faint);background:var(--white);color:var(--ink2);
+  cursor:pointer;transition:all .18s;
+}
+.qopt:hover{border-color:var(--rose-mid);color:var(--rose)}
+.qopt.sel{border-color:var(--rose);background:var(--rose-soft);color:var(--rose)}
+.quiz-footer{display:flex;align-items:center;justify-content:space-between;margin-top:1.3rem;flex-wrap:wrap;gap:.8rem}
+
+/* ─── RECS ─── */
+.recs-wrap{padding:1.8rem 1.5rem}
+.recs-inner{max-width:1060px;margin:0 auto}
+.recs-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.prof-bar{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.4rem}
+.ptag{
+  background:var(--rose-soft);color:var(--rose);
+  font-size:.67rem;font-weight:600;
+  padding:.28rem .82rem;border-radius:var(--r3);
+  border:1px solid var(--rose-mid);
+}
+.two-col-recs{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;align-items:start}
+@media(max-width:740px){.two-col-recs{grid-template-columns:1fr}}
+
+.prod-row{
+  display:flex;gap:.75rem;align-items:flex-start;
+  padding:.85rem 0;border-bottom:1px solid var(--faint);
+}
+.prod-row:last-child{border:none}
+.pico{width:38px;height:38px;border-radius:11px;background:var(--rose-soft);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+.pname{font-size:.79rem;font-weight:600;color:var(--ink)}
+.pwhy{font-size:.7rem;color:var(--muted);line-height:1.65;margin-top:.18rem;font-weight:300}
+.pusage{font-size:.67rem;color:var(--rose);font-weight:500;margin-top:.18rem}
+.ppri{
+  display:inline-block;font-size:.57rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:.14rem .48rem;border-radius:var(--r3);margin-top:.28rem;
+}
+.ppri.Essential{background:#FFF3CD;color:#7A5000}
+.ppri.Recommended{background:var(--sage-soft);color:#2D6B35}
+.ppri.Optional{background:var(--paper);color:var(--muted);border:1px solid var(--faint)}
+
+.diy-box{
+  background:var(--sage-soft);border:1px solid #C3DDCA;
+  border-radius:13px;padding:.9rem;margin-bottom:.65rem;
+}
+.diy-n{font-size:.76rem;font-weight:700;color:#2D6B35;margin-bottom:.35rem}
+.diy-t{font-size:.71rem;color:var(--ink2);line-height:1.68;font-weight:300}
+.diy-f{font-size:.62rem;font-weight:600;color:var(--sage);margin-top:.35rem}
+
+.ls-row{
+  display:flex;gap:.75rem;align-items:flex-start;
+  padding:.55rem 0;border-bottom:1px solid var(--faint);
+}
+.ls-row:last-child{border:none}
+.lsic{font-size:1.1rem;flex-shrink:0;margin-top:.06rem}
+.lstip{font-size:.77rem;font-weight:600;color:var(--ink)}
+.lsdet{font-size:.69rem;color:var(--muted);line-height:1.6;margin-top:.18rem;font-weight:300}
+
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.wday{background:var(--paper);border-radius:10px;padding:.65rem}
+.wdn{font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rose);margin-bottom:.22rem}
+.wdt{font-size:.69rem;color:var(--ink2);line-height:1.55;font-weight:300}
+
+.ing-sec{margin-bottom:1rem}
+.ing-sec-lbl{font-size:.6rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:.45rem;display:block}
+.ing-sec-lbl.g{color:var(--sage)}.ing-sec-lbl.b{color:#C03030}
+.ingd-row{display:flex;align-items:flex-start;gap:.45rem;padding:.45rem 0;border-bottom:1px solid var(--faint)}
+.ingd-row:last-child{border:none}
+.ingd-ic{font-size:.76rem;flex-shrink:0;margin-top:.05rem}
+.ingd-n{font-size:.74rem;font-weight:600;color:var(--ink)}
+.ingd-r{font-size:.67rem;color:var(--muted);line-height:1.55;margin-top:.1rem;font-weight:300}
+
+/* ─── LOADING ─── */
+.loading-screen{padding:5rem 1.5rem;text-align:center;max-width:460px;margin:0 auto;display:none}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:1.4rem;right:1.4rem;
+  background:var(--ink);color:#fff;
+  font-size:.77rem;font-weight:500;
+  padding:.72rem 1.2rem;border-radius:var(--r3);
+  box-shadow:var(--shadow-up);z-index:9999;
+  transform:translateY(70px);opacity:0;
+  transition:all .32s cubic-bezier(.34,1.56,.64,1);
+  max-width:260px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--sage)}
+.toast.error{background:var(--rose)}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="logo">Skin<span class="logo-dot">IQ</span></div>
+  <div class="topbar-badge">✦ AI-Powered Analysis</div>
+</nav>
+
+<div class="progress-bar" id="progressBar">
+  <div class="steps">
+    <div class="stp" id="s1"><div class="stp-dot">01</div><div class="stp-lbl">Capture</div></div>
+    <div class="stp" id="s2"><div class="stp-dot">02</div><div class="stp-lbl">Analyze</div></div>
+    <div class="stp" id="s3"><div class="stp-dot">03</div><div class="stp-lbl">Results</div></div>
+    <div class="stp" id="s4"><div class="stp-dot">04</div><div class="stp-lbl">Routine</div></div>
+    <div class="stp" id="s5"><div class="stp-dot">05</div><div class="stp-lbl">Quiz</div></div>
+    <div class="stp" id="s6"><div class="stp-dot">✓</div><div class="stp-lbl">Recs</div></div>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 0 · HERO ══════════ -->
+<div class="panel active" id="panel0">
+  <div class="hero">
+    <div class="hero-chip">✦ Science-backed skin analysis</div>
+    <h1>Your skin,<br><i>finally understood</i></h1>
+    <p class="hero-sub">Multi-angle AI scan detects acne, pigmentation, texture & more — then builds your complete personalized routine.</p>
+    <button class="cta-btn" onclick="startJourney()">
+      Start free scan
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 7.5h10M9 3.5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="hero-proof">
+      <div class="proof-item"><span class="proof-num">11+</span><div class="proof-txt">Issues detected</div></div>
+      <div class="proof-item"><span class="proof-num">5</span><div class="proof-txt">Angles analyzed</div></div>
+      <div class="proof-item"><span class="proof-num">100%</span><div class="proof-txt">Personalized</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 1 · CAPTURE ══════════ -->
+<div class="panel" id="panel1">
+  <div class="sec-header">
+    <span class="sec-tag">Step 1 — Capture</span>
+    <h2 class="sec-title">Photo your skin</h2>
+    <p class="sec-sub">5 angles for a complete skin map — good natural light works best</p>
+  </div>
+
+  <div class="instr-strip" id="instrStrip">
+    <span>💡</span><span id="instrTxt">Select an angle below to begin. Use natural light for best results.</span>
+  </div>
+
+  <div class="q-row" id="qRow" style="display:none">
+    <div class="q-chip" id="qcL"><div class="qdot"></div>Lighting</div>
+    <div class="q-chip" id="qcF"><div class="qdot"></div>Face</div>
+    <div class="q-chip" id="qcB"><div class="qdot"></div>Sharpness</div>
+    <div class="q-chip" id="qcD"><div class="qdot"></div>Distance</div>
+  </div>
+
+  <div class="cam-section" id="camSection">
+    <video id="cameraFeed" autoplay playsinline></video>
+    <canvas id="captureCanvas"></canvas>
+    <div class="cam-ctrl">
+      <button class="btn" onclick="stopCam()">✕ Close</button>
+      <div class="shutter" onclick="captureNow()" title="Capture"></div>
+      <button class="btn" onclick="retake()">↺ Retake</button>
+    </div>
+  </div>
+
+  <div class="ang-wrap">
+    <div class="ang-grid" id="angGrid"></div>
+  </div>
+
+  <div class="thumbs" id="thumbsRow"></div>
+
+  <div class="act-row">
+    <div class="count-badge" id="countBadge">0 / 5 captured</div>
+    <button class="btn" onclick="document.getElementById('fileIn').click()">⬆ Upload Photos</button>
+    <button class="btn btn-dark" id="analyzeBtn" onclick="doAnalyze()" disabled>Analyze skin →</button>
+  </div>
+  <input type="file" id="fileIn" multiple accept="image/*" style="display:none" onchange="handleFiles(event)">
+</div>
+
+<!-- ══════════ PANEL 2 · SCANNING ══════════ -->
+<div class="panel" id="panel2">
+  <div class="scan-screen">
+    <div class="scan-orb"><div class="orb-icon">🔬</div></div>
+    <h2 class="scan-title">Analyzing your skin</h2>
+    <p class="scan-sub">Processing your photos — takes ~15 seconds</p>
+    <ul class="scan-list" id="scanList">
+      <li class="scan-li"><span class="sl-ic">👁</span>Face detection & alignment</li>
+      <li class="scan-li"><span class="sl-ic">✂️</span>Skin segmentation</li>
+      <li class="scan-li"><span class="sl-ic">☀️</span>Lighting normalization</li>
+      <li class="scan-li"><span class="sl-ic">🗺</span>Facial zone extraction</li>
+      <li class="scan-li"><span class="sl-ic">🧬</span>Condition detection</li>
+      <li class="scan-li"><span class="sl-ic">🔄</span>Multi-angle fusion</li>
+      <li class="scan-li"><span class="sl-ic">📊</span>Skin type classification</li>
+      <li class="scan-li"><span class="sl-ic">📋</span>Generating report</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 3 · RESULTS ══════════ -->
+<div class="panel" id="panel3">
+  <div class="rpage">
+    <div class="rpage-inner">
+      <div class="rpage-top">
+        <div><h2>Your skin report</h2><p id="resDate">Analysis complete</p></div>
+        <div class="btn-row">
+          <button class="btn" onclick="restart()">↺ New scan</button>
+          <button class="btn btn-dark" onclick="goRoutine()">View routine →</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="score-card">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="52" stroke-dasharray="326.7"/>
+                <circle class="ring-fill" id="ringF" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div class="ring-inner">
+                <div class="ring-n" id="ringN">0</div>
+                <div class="ring-l">Skin Score</div>
+              </div>
+            </div>
+            <div class="type-pill" id="typePill">—</div>
+            <p class="type-desc" id="typeDesc"></p>
+          </div>
+          <div class="card">
+            <div class="card-t">Detected conditions</div>
+            <div id="condsList"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">Skin metrics</div>
+            <div class="metrics-grid" id="metricsGrid"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-t">Zone analysis</div>
+            <div class="zones-grid" id="zonesGrid"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">AI insights</div>
+            <div class="insights" id="insightsEl"></div>
+          </div>
+          <div class="prog-box">
+            <div class="prog-lbl">📈 Progress tracking</div>
+            <p class="prog-desc">Baseline saved. Rescan in 4 weeks to measure your improvement.</p>
+            <div class="prog-mini">
+              <div class="pm-box"><div class="pm-val" id="issueN">—</div><div class="pm-lbl">Issues found</div></div>
+              <div class="pm-box"><div class="pm-val">4 wk</div><div class="pm-lbl">Next scan</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 4 · ROUTINE ══════════ -->
+<div class="panel" id="panel4">
+  <div class="rpage">
+    <div class="rpage-inner">
+      <div class="rpage-top">
+        <div><h2>Your skincare routine</h2><p>Personalized for your skin profile</p></div>
+        <div class="btn-row">
+          <button class="btn" onclick="showP(3)">← Results</button>
+          <button class="btn btn-dark" onclick="goQuiz()">Personalize further →</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-t">🌅 Morning routine</div>
+            <div class="rlist" id="morningList"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">🌙 Evening routine</div>
+            <div class="rlist" id="eveningList"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-t">Targeted treatments</div>
+            <div class="tgrid" id="treatGrid"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">Seek these ingredients</div>
+            <div class="ing-wrap" id="goodIngs"></div>
+          </div>
+          <div class="card">
+            <div class="card-t">Avoid these ingredients</div>
+            <div class="ing-wrap" id="badIngs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 5 · QUIZ ══════════ -->
+<div class="panel" id="panel5">
+  <div class="quiz-wrap">
+    <div style="margin-bottom:1.8rem">
+      <span class="sec-tag" style="text-align:left">Step 5 — Quiz</span>
+      <h2 class="sec-title" style="text-align:left;padding:0">Tell us about you</h2>
+      <p class="sec-sub" style="text-align:left;max-width:100%">6 quick questions to make your recommendations ultra-personal</p>
+    </div>
+
+    <div class="qcard" id="qc1">
+      <div class="qq">How old are you?</div>
+      <div class="qopts" id="q1">
+        <div class="qopt" onclick="pickQ('q1','qc1',this)">Under 20</div>
+        <div class="qopt" onclick="pickQ('q1','qc1',this)">20–29</div>
+        <div class="qopt" onclick="pickQ('q1','qc1',this)">30–39</div>
+        <div class="qopt" onclick="pickQ('q1','qc1',this)">40–49</div>
+        <div class="qopt" onclick="pickQ('q1','qc1',this)">50+</div>
+      </div>
+    </div>
+    <div class="qcard" id="qc2">
+      <div class="qq">Monthly skincare budget?</div>
+      <div class="qopts" id="q2">
+        <div class="qopt" onclick="pickQ('q2','qc2',this)">Under ₹500</div>
+        <div class="qopt" onclick="pickQ('q2','qc2',this)">₹500–₹1500</div>
+        <div class="qopt" onclick="pickQ('q2','qc2',this)">₹1500–₹3000</div>
+        <div class="qopt" onclick="pickQ('q2','qc2',this)">₹3000+</div>
+      </div>
+    </div>
+    <div class="qcard" id="qc3">
+      <div class="qq">Your #1 skin concern right now?</div>
+      <div class="qopts" id="q3">
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Acne & Breakouts</div>
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Dark Spots & Pigmentation</div>
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Dryness & Dehydration</div>
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Oiliness & Large Pores</div>
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Anti-aging & Fine Lines</div>
+        <div class="qopt" onclick="pickQ('q3','qc3',this)">Sensitivity & Redness</div>
+      </div>
+    </div>
+    <div class="qcard" id="qc4">
+      <div class="qq">How would you describe your lifestyle?</div>
+      <div class="qopts" id="q4">
+        <div class="qopt" onclick="pickQ('q4','qc4',this)">Mostly indoors, desk job</div>
+        <div class="qopt" onclick="pickQ('q4','qc4',this)">Outdoors, lots of sun</div>
+        <div class="qopt" onclick="pickQ('q4','qc4',this)">High stress, irregular sleep</div>
+        <div class="qopt" onclick="pickQ('q4','qc4',this)">Active, frequent exercise</div>
+      </div>
+    </div>
+    <div class="qcard" id="qc5">
+      <div class="qq">How is your diet typically?</div>
+      <div class="qopts" id="q5">
+        <div class="qopt" onclick="pickQ('q5','qc5',this)">Mostly vegetarian / vegan</div>
+        <div class="qopt" onclick="pickQ('q5','qc5',this)">Mixed diet with dairy</div>
+        <div class="qopt" onclick="pickQ('q5','qc5',this)">High sugar / processed foods</div>
+        <div class="qopt" onclick="pickQ('q5','qc5',this)">Lots of spicy food</div>
+        <div class="qopt" onclick="pickQ('q5','qc5',this)">Balanced & healthy</div>
+      </div>
+    </div>
+    <div class="qcard" id="qc6">
+      <div class="qq">Current skincare routine?</div>
+      <div class="qopts" id="q6">
+        <div class="qopt" onclick="pickQ('q6','qc6',this)">None — starting fresh</div>
+        <div class="qopt" onclick="pickQ('q6','qc6',this)">Just water / basic cleanser</div>
+        <div class="qopt" onclick="pickQ('q6','qc6',this)">Basic: cleanser + moisturizer</div>
+        <div class="qopt" onclick="pickQ('q6','qc6',this)">Full routine with serums</div>
+      </div>
+    </div>
+
+    <div class="quiz-footer">
+      <div class="count-badge" id="qProg">0 / 6 answered</div>
+      <div class="btn-row">
+        <button class="btn" onclick="showP(4)">← Back</button>
+        <button class="btn btn-dark" id="recsBtn" onclick="doRecs()" disabled>Get recommendations →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PANEL 6 · RECS ══════════ -->
+<div class="panel" id="panel6">
+  <div class="recs-wrap">
+    <div class="recs-inner">
+      <div class="recs-top">
+        <div>
+          <span class="sec-tag" style="text-align:left">Your personalized engine</span>
+          <h2 class="sec-title" style="text-align:left;padding:0">Complete recommendations</h2>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="showP(5)">← Edit quiz</button>
+          <button class="btn" onclick="restart()">↺ New scan</button>
+          <button class="btn btn-dark" onclick="dlReport()">⬇ Save report</button>
+        </div>
+      </div>
+
+      <div class="loading-screen" id="recsLoad">
+        <div class="scan-orb"><div class="orb-icon">✨</div></div>
+        <h2 class="scan-title">Building your recommendations…</h2>
+        <p class="scan-sub">Combining scan data with your profile</p>
+      </div>
+
+      <div id="recsOut" style="display:none">
+        <div class="prof-bar" id="profBar"></div>
+        <div class="two-col-recs">
+          <div>
+            <div class="card"><div class="card-t">🧴 Products</div><div id="rProds"></div></div>
+            <div class="card"><div class="card-t">🌿 DIY Remedies</div><div id="rDIY"></div></div>
+          </div>
+          <div>
+            <div class="card"><div class="card-t">🔬 Ingredient guide</div><div id="rIngs"></div></div>
+            <div class="card"><div class="card-t">🌱 Lifestyle & diet</div><div id="rLife"></div></div>
+            <div class="card"><div class="card-t">📅 Weekly plan</div><div class="wgrid" id="rWeek"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "http://localhost:5000";
+const ANGLES=[
+  {key:"center",  label:"Front",    icon:"😐",hint:"Look straight at camera"},
+  {key:"left",    label:"Left",     icon:"⬅️",hint:"Turn head to the right"},
+  {key:"right",   label:"Right",    icon:"➡️",hint:"Turn head to the left"},
+  {key:"forehead",label:"Forehead", icon:"⬆️",hint:"Tilt head slightly down"},
+  {key:"chin",    label:"Chin",     icon:"⬇️",hint:"Tilt head slightly up"},
+];
+let ST={angle:null,captured:{},stream:null,qiv:null};
+const QA={};
+
+// ── nav ──
+function startJourney(){
+  document.getElementById("progressBar").style.display="block";
+  showP(1); renderGrid(); renderThumbs();
+}
+function showP(n){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("panel"+n).classList.add("active");
+  document.querySelectorAll(".stp").forEach((s,i)=>{
+    s.classList.remove("active","done");
+    if(i+1<n) s.classList.add("done");
+    if(i+1===n) s.classList.add("active");
+  });
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ── grid ──
+function renderGrid(){
+  document.getElementById("angGrid").innerHTML=ANGLES.map(a=>{
+    const c=ST.captured[a.key], ac=ST.angle===a.key;
+    return`<div class="acard ${a.key}${ac?" active":""}${c?" captured":""}" onclick="pickAngle('${a.key}')">
+      <div class="ac-head"><span class="ac-label">${a.label}</span><span class="ac-status">${c?"✓":"○"}</span></div>
+      <div class="ac-body">
+        ${c?`<img src="${c}" alt="${a.label}">`:`<div class="face-ring"></div><div class="ac-hint">${ac?"Camera active":a.hint}</div>`}
+      </div>
+    </div>`;
+  }).join("");
+  updateCount();
+}
+function renderThumbs(){
+  document.getElementById("thumbsRow").innerHTML=ANGLES.map(a=>{
+    const img=ST.captured[a.key];
+    return`<div class="thumb${img?"":" empty"}">
+      ${img?`<img src="${img}"><div class="thumb-l">${a.label}</div>`:`<span class="ei">${a.icon}</span><span class="el">${a.label}</span>`}
+    </div>`;
+  }).join("");
+}
+function updateCount(){
+  const n=Object.keys(ST.captured).length;
+  document.getElementById("countBadge").textContent=`${n} / 5 captured`;
+  const b=document.getElementById("analyzeBtn");
+  b.disabled=n<1;
+  if(n>=1) b.textContent=n>=5?"Analyze skin →":`Analyze (${n} photo${n>1?"s":""}) →`;
+}
+
+// ── camera ──
+async function pickAngle(key){
+  ST.angle=key;
+  const a=ANGLES.find(x=>x.key===key);
+  document.getElementById("instrTxt").textContent=`📍 ${a.label}: ${a.hint}`;
+  if(!ST.captured[key]) await openCam();
+  renderGrid();
+}
+async function openCam(){
+  try{
+    ST.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:960}}});
+    const v=document.getElementById("cameraFeed");
+    v.srcObject=ST.stream; v.style.display="block";
+    document.getElementById("camSection").style.display="block";
+    document.getElementById("qRow").style.display="flex";
+    runQCheck();
+  }catch(e){toast("Camera denied — use Upload instead","error")}
+}
+function stopCam(){
+  if(ST.stream){ST.stream.getTracks().forEach(t=>t.stop());ST.stream=null;}
+  if(ST.qiv){clearInterval(ST.qiv);ST.qiv=null;}
+  document.getElementById("cameraFeed").style.display="none";
+  document.getElementById("camSection").style.display="none";
+  document.getElementById("qRow").style.display="none";
+  ST.angle=null; renderGrid();
+}
+function runQCheck(){
+  if(ST.qiv) clearInterval(ST.qiv);
+  let t=0;
+  ST.qiv=setInterval(()=>{
+    t++;
+    setQ("qcL",t>1); setQ("qcF",t>2); setQ("qcB",t>2); setQ("qcD",t>1);
+  },600);
+}
+function setQ(id,ok){
+  const el=document.getElementById(id);
+  el.className="q-chip"+(ok?" ok":"");
+}
+function captureNow(){
+  const v=document.getElementById("cameraFeed"),c=document.getElementById("captureCanvas");
+  c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+  c.getContext("2d").drawImage(v,0,0);
+  ST.captured[ST.angle]=c.toDataURL("image/jpeg",.85);
+  toast("✓ "+ANGLES.find(x=>x.key===ST.angle).label+" captured","success");
+  stopCam(); renderGrid(); renderThumbs();
+  const nxt=ANGLES.find(x=>!ST.captured[x.key]);
+  if(nxt) document.getElementById("instrTxt").textContent=`Next up: ${nxt.label} — ${nxt.hint}`;
+}
+function retake(){ if(ST.angle) delete ST.captured[ST.angle]; }
+function handleFiles(e){
+  Array.from(e.target.files).slice(0,5).forEach((f,i)=>{
+    const key=ANGLES[i]?.key; if(!key) return;
+    const r=new FileReader();
+    r.onload=ev=>{ST.captured[key]=ev.target.result; renderGrid(); renderThumbs();};
+    r.readAsDataURL(f);
+  });
+  toast(`${Math.min(e.target.files.length,5)} photos loaded`,"success");
+}
+
+// ── analyze ──
+async function doAnalyze(){
+  stopCam(); showP(2);
+  const items=document.querySelectorAll(".scan-li");
+  let idx=0;
+  const iv=setInterval(()=>{
+    if(idx>0) items[idx-1].classList.remove("active");
+    if(idx<items.length){ if(idx>0) items[idx-1].classList.add("done"); items[idx].classList.add("active"); idx++; }
+  },900);
+  try{
+    const res=await fetch(`${API}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({images:ST.captured})});
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||`Error ${res.status}`);}
+    const d=await res.json();
+    if(!d.success) throw new Error(d.error||"Failed");
+    window._scan=d.data;
+    clearInterval(iv);
+    items.forEach(i=>{i.classList.remove("active");i.classList.add("done");});
+    setTimeout(()=>{ showP(3); renderResults(d.data); },500);
+  }catch(err){
+    clearInterval(iv); toast("Analysis failed: "+err.message,"error"); showP(1);
+  }
+}
+
+// ── render results ──
+function renderResults(r){
+  document.getElementById("resDate").textContent="Analysis complete · "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  const sc=r.skinScore??70, circ=326.7;
+  setTimeout(()=>{
+    document.getElementById("ringF").style.strokeDashoffset=circ-(sc/100)*circ;
+    countUp("ringN",0,sc,1400);
+  },200);
+  document.getElementById("typePill").textContent=(r.skinType||"Combination")+" Skin";
+  document.getElementById("typeDesc").textContent=r.skinTypeSummary||"";
+  const conds=r.conditions||[];
+  document.getElementById("condsList").innerHTML=conds.length
+    ?conds.map(c=>`<div class="cond-row"><div class="cdot" style="background:${c.color||"#C96B5A"}"></div><div class="cname">${c.name}</div><div class="csev ${c.severity}">${c.severity}</div></div>`).join("")
+    :`<p style="font-size:.77rem;color:var(--muted)">No significant conditions detected.</p>`;
+  const m=r.metrics||{};
+  document.getElementById("metricsGrid").innerHTML=[
+    {l:"Hydration",v:m.hydration??60},{l:"Oiliness",v:m.oiliness??50},
+    {l:"Pores",v:m.poreVisibility??40},{l:"Evenness",v:m.evenness??65},
+  ].map(x=>`<div class="mbox"><div class="mval">${x.v}<span style="font-size:.9rem">%</span></div><div class="mlbl">${x.l}</div><div class="mbar"><div class="mbar-fill" style="width:${x.v}%"></div></div></div>`).join("");
+  const z=r.zones||{}, zm={forehead:"↑ Forehead",leftCheek:"← Left Cheek",rightCheek:"Right Cheek →",nose:"▲ Nose",chin:"↓ Chin"};
+  document.getElementById("zonesGrid").innerHTML=Object.entries(zm).map(([k,l])=>`<div class="zbox${k==="nose"?" full":""}"><div class="zname">${l}</div><div class="ztext">${z[k]||"Normal appearance"}</div></div>`).join("");
+  document.getElementById("insightsEl").textContent=r.insights||"";
+  document.getElementById("issueN").textContent=r.totalIssues??conds.length;
+}
+
+// ── routine ──
+function goRoutine(){
+  showP(4); const r=window._scan; if(!r) return;
+  document.getElementById("morningList").innerHTML=(r.morningRoutine||[]).map((s,i)=>`<div class="ritem"><div class="rnum">${i+1}</div><div><div class="rstep">${s.step}</div><div class="rprod">${s.product}</div><div class="rnote">${s.note}</div></div></div>`).join("");
+  document.getElementById("eveningList").innerHTML=(r.eveningRoutine||[]).map((s,i)=>`<div class="ritem"><div class="rnum">${i+1}</div><div><div class="rstep">${s.step}</div><div class="rprod">${s.product}</div><div class="rnote">${s.note}</div></div></div>`).join("");
+  document.getElementById("treatGrid").innerHTML=(r.treatments||[]).map(t=>`<div class="titem"><div class="tico">${t.icon}</div><div><div class="tname">${t.name}</div><div class="tdesc">${t.description}</div><div class="ttags">${(t.tags||[]).map(tg=>`<span class="ttag">${tg}</span>`).join("")}</div></div></div>`).join("");
+  document.getElementById("goodIngs").innerHTML=(r.goodIngredients||[]).map(i=>`<span class="ing good">${i}</span>`).join("");
+  document.getElementById("badIngs").innerHTML=(r.badIngredients||[]).map(i=>`<span class="ing bad">${i}</span>`).join("");
+}
+
+// ── quiz ──
+function goQuiz(){ showP(5); }
+function pickQ(qid,cid,el){
+  document.querySelectorAll(`#${qid} .qopt`).forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel"); QA[qid]=el.textContent.trim();
+  document.getElementById(cid)?.classList.add("ok");
+  const n=Object.keys(QA).length;
+  document.getElementById("qProg").textContent=`${n} / 6 answered`;
+  document.getElementById("recsBtn").disabled=n<6;
+}
+
+// ── recs ──
+async function doRecs(){
+  showP(6);
+  document.getElementById("recsLoad").style.display="block";
+  document.getElementById("recsOut").style.display="none";
+  try{
+    const scan=window._scan||{};
+    const prompt=`You are an expert dermatologist. Based on skin scan AND quiz answers, give highly personalized recommendations.
+SKIN SCAN: Type: ${scan.skinType||"Unknown"}, Score: ${scan.skinScore||"N/A"}/100
+Conditions: ${(scan.conditions||[]).map(c=>`${c.name} (${c.severity})`).join(", ")||"None"}
+Insights: ${scan.insights||"N/A"}
+QUIZ: Age: ${QA.q1||"N/A"}, Budget: ${QA.q2||"N/A"}, Concern: ${QA.q3||"N/A"}, Lifestyle: ${QA.q4||"N/A"}, Diet: ${QA.q5||"N/A"}, Routine: ${QA.q6||"N/A"}
+Respond ONLY with valid JSON (no markdown):
+{"products":[{"icon":"<e>","name":"<type>","why":"<1-2 sentences>","priority":"<Essential|Recommended|Optional>","usage":"<how/when>"}],"diy":[{"name":"<n>","ingredients":"<list>","recipe":"<how to make+apply>","frequency":"<how often>","benefit":"<for their skin>"}],"goodIngredients":[{"name":"<ing>","reason":"<why helps>"}],"badIngredients":[{"name":"<ing>","reason":"<why avoid>"}],"lifestyle":[{"icon":"<e>","tip":"<title>","detail":"<specific advice>"}],"weeklyPlan":{"monday":"<task>","tuesday":"<task>","wednesday":"<task>","thursday":"<task>","friday":"<task>","saturday":"<task>","sunday":"<task>"}}`;
+    const res=await fetch(`${API}/analyze-text`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||`Error ${res.status}`);}
+    const d=await res.json();
+    if(!d.success) throw new Error(d.error||"Failed");
+    window._recs=d.data;
+    renderRecs(d.data,scan);
+  }catch(err){ toast("Failed: "+err.message,"error"); showP(5); }
+  finally{ document.getElementById("recsLoad").style.display="none"; }
+}
+function renderRecs(r,scan){
+  document.getElementById("recsOut").style.display="block";
+  document.getElementById("profBar").innerHTML=[`🧬 ${scan.skinType||"—"} Skin`,`📊 Score ${scan.skinScore||"—"}/100`,`👤 ${QA.q1||"—"}`,`💰 ${QA.q2||"—"}`,`🎯 ${QA.q3||"—"}`,`🥗 ${QA.q5||"—"}`].map(t=>`<div class="ptag">${t}</div>`).join("");
+  document.getElementById("rProds").innerHTML=(r.products||[]).map(p=>`<div class="prod-row"><div class="pico">${p.icon}</div><div><div class="pname">${p.name}</div><div class="pwhy">${p.why}</div><div class="pusage">📌 ${p.usage}</div><span class="ppri ${p.priority||"Optional"}">${p.priority}</span></div></div>`).join("");
+  document.getElementById("rDIY").innerHTML=(r.diy||[]).map(d=>`<div class="diy-box"><div class="diy-n">🌿 ${d.name}</div><div class="diy-t"><strong>Ingredients:</strong> ${d.ingredients}</div><div class="diy-t" style="margin-top:.28rem">${d.recipe}</div><div class="diy-t" style="color:var(--sage);margin-top:.28rem">${d.benefit}</div><div class="diy-f">Use: ${d.frequency}</div></div>`).join("");
+  document.getElementById("rIngs").innerHTML=`<div class="ing-sec"><span class="ing-sec-lbl g">✓ Seek these out</span>${(r.goodIngredients||[]).map(i=>`<div class="ingd-row"><span class="ingd-ic" style="color:var(--sage)">✓</span><div><div class="ingd-n">${i.name}</div><div class="ingd-r">${i.reason}</div></div></div>`).join("")}</div><div class="ing-sec"><span class="ing-sec-lbl b">✕ Avoid these</span>${(r.badIngredients||[]).map(i=>`<div class="ingd-row"><span class="ingd-ic" style="color:#C03030">✕</span><div><div class="ingd-n">${i.name}</div><div class="ingd-r">${i.reason}</div></div></div>`).join("")}</div>`;
+  document.getElementById("rLife").innerHTML=(r.lifestyle||[]).map(l=>`<div class="ls-row"><div class="lsic">${l.icon}</div><div><div class="lstip">${l.tip}</div><div class="lsdet">${l.detail}</div></div></div>`).join("");
+  const wp=r.weeklyPlan||{},days=["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+  document.getElementById("rWeek").innerHTML=days.map(d=>`<div class="wday"><div class="wdn">${d}</div><div class="wdt">${wp[d]||"—"}</div></div>`).join("");
+}
+
+// ── helpers ──
+function countUp(id,from,to,dur){
+  const el=document.getElementById(id), s=performance.now();
+  const f=now=>{const t=Math.min((now-s)/dur,1),e=1-Math.pow(1-t,3);el.textContent=Math.round(from+(to-from)*e);if(t<1)requestAnimationFrame(f);};
+  requestAnimationFrame(f);
+}
+function toast(msg,type="info"){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast "+type+" show";
+  setTimeout(()=>t.classList.remove("show"),3200);
+}
+function restart(){
+  ST={angle:null,captured:{},stream:null,qiv:null};
+  window._scan=null; window._recs=null;
+  document.getElementById("progressBar").style.display="none";
+  showP(0);
+}
+function dlReport(){
+  const s=window._scan||{},r=window._recs||{};
+  const txt=`SKINIQ — COMPLETE SKIN REPORT\n${new Date().toLocaleDateString()}\n\nSCORE: ${s.skinScore}/100 | TYPE: ${s.skinType}\n${s.skinTypeSummary}\n\nCONDITIONS:\n${(s.conditions||[]).map(c=>`• ${c.name} — ${c.severity}`).join("\n")}\n\nINSIGHTS:\n${s.insights}\n\nPRODUCTS:\n${(r.products||[]).map((p,i)=>`${i+1}. [${p.priority}] ${p.name}\n   ${p.why}\n   ${p.usage}`).join("\n\n")}\n\nDIY:\n${(r.diy||[]).map((d,i)=>`${i+1}. ${d.name}\n   ${d.ingredients}\n   ${d.recipe}`).join("\n\n")}\n\nGOOD INGREDIENTS: ${(r.goodIngredients||[]).map(i=>i.name).join(", ")}\nAVOID: ${(r.badIngredients||[]).map(i=>i.name).join(", ")}\n\nWEEKLY PLAN:\n${Object.entries(r.weeklyPlan||{}).map(([d,t])=>`${d.toUpperCase()}: ${t}`).join("\n")}`;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));
+  a.download="SkinIQ_Report.txt"; a.click();
+  toast("Report saved!","success");
+}
+</script>
+</body>
+</html>
