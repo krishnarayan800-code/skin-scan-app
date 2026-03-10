@@ -169,6 +169,7 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
   width:100%;aspect-ratio:3/4;object-fit:cover;
   border-radius:var(--r2);background:#000;display:none;
   box-shadow:var(--shadow-up);
+  transform:scaleX(-1);
 }
 #captureCanvas{display:none}
 .cam-ctrl{
@@ -891,7 +892,7 @@ body{font-family:'Geist',sans-serif;background:var(--cream);color:var(--ink);min
 <div class="toast" id="toast"></div>
 
 <script>
-const API = "https://skiniq-app.onrender.com";
+const API = "http://localhost:5000";
 const ANGLES=[
   {key:"center",  label:"Front",    icon:"😐",hint:"Look straight at camera"},
   {key:"left",    label:"Left",     icon:"⬅️",hint:"Turn head to the right"},
@@ -963,6 +964,9 @@ async function openCam(){
     document.getElementById("camSection").style.display="block";
     document.getElementById("qRow").style.display="flex";
     runQCheck();
+    setTimeout(()=>{
+      document.getElementById("camSection").scrollIntoView({behavior:"smooth",block:"center"});
+    },100);
   }catch(e){toast("Camera denied — use Upload instead","error")}
 }
 function stopCam(){
@@ -988,7 +992,10 @@ function setQ(id,ok){
 function captureNow(){
   const v=document.getElementById("cameraFeed"),c=document.getElementById("captureCanvas");
   c.width=v.videoWidth||640; c.height=v.videoHeight||480;
-  c.getContext("2d").drawImage(v,0,0);
+  const ctx=c.getContext("2d");
+  ctx.translate(c.width,0);
+  ctx.scale(-1,1);
+  ctx.drawImage(v,0,0);
   ST.captured[ST.angle]=c.toDataURL("image/jpeg",.85);
   toast("✓ "+ANGLES.find(x=>x.key===ST.angle).label+" captured","success");
   stopCam(); renderGrid(); renderThumbs();
