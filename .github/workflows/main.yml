@@ -1,0 +1,14 @@
+name: Render ping
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes (UTC)
+  workflow_dispatch:
+
+jobs:
+  curl-website:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping SkinIQ server
+        run: curl -s https://skiniq-app.onrender.com > /dev/null
