@@ -108,7 +108,7 @@ Respond ONLY with valid JSON, no markdown, no extra text:
 }"""})
 
         msg = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-5-5",
             max_tokens=2000,
             messages=[{"role": "user", "content": content}]
         )
@@ -147,7 +147,7 @@ def analyze_text():
         data = request.get_json()
         prompt = data.get("prompt", "")
         msg = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-5-5",
             max_tokens=3000,
             messages=[{"role": "user", "content": prompt}]
         )
